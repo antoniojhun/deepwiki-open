@@ -11,27 +11,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from api.config import get_model_config
+from api.config import get_model_config, configs, OPENROUTER_API_KEY, OPENAI_API_KEY, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from api.data_pipeline import count_tokens, get_file_content
 from api.openai_client import OpenAIClient
 from api.openrouter_client import OpenRouterClient
+from api.bedrock_client import BedrockClient
 from api.rag import RAG
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+from api.logging_config import setup_logging
+
+setup_logging()
 logger = logging.getLogger(__name__)
 
-# Get API keys from environment variables
-google_api_key = os.environ.get('GOOGLE_API_KEY')
-
-# Configure Google Generative AI
-if google_api_key:
-    genai.configure(api_key=google_api_key)
-else:
-    logger.warning("GOOGLE_API_KEY not found in environment variables")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -62,14 +54,16 @@ class ChatCompletionRequest(BaseModel):
     filePath: Optional[str] = Field(None, description="Optional path to a file in the repository to include in the prompt")
     token: Optional[str] = Field(None, description="Personal access token for private repositories")
     type: Optional[str] = Field("github", description="Type of repository (e.g., 'github', 'gitlab', 'bitbucket')")
-    
+
     # model parameters
-    provider: str = Field("google", description="Model provider (google, openai, openrouter, ollama)")
+    provider: str = Field("google", description="Model provider (google, openai, openrouter, ollama, bedrock)")
     model: Optional[str] = Field(None, description="Model name for the specified provider")
-    
+
     language: Optional[str] = Field("en", description="Language for content generation (e.g., 'en', 'ja', 'zh', 'es', 'kr', 'vi')")
     excluded_dirs: Optional[str] = Field(None, description="Comma-separated list of directories to exclude from processing")
     excluded_files: Optional[str] = Field(None, description="Comma-separated list of file patterns to exclude from processing")
+    included_dirs: Optional[str] = Field(None, description="Comma-separated list of directories to include exclusively")
+    included_files: Optional[str] = Field(None, description="Comma-separated list of file patterns to include exclusively")
 
 @app.post("/chat/completions/stream")
 async def chat_completions_stream(request: ChatCompletionRequest):
@@ -93,18 +87,38 @@ async def chat_completions_stream(request: ChatCompletionRequest):
             # Extract custom file filter parameters if provided
             excluded_dirs = None
             excluded_files = None
+            included_dirs = None
+            included_files = None
+
             if request.excluded_dirs:
                 excluded_dirs = [unquote(dir_path) for dir_path in request.excluded_dirs.split('\n') if dir_path.strip()]
                 logger.info(f"Using custom excluded directories: {excluded_dirs}")
             if request.excluded_files:
                 excluded_files = [unquote(file_pattern) for file_pattern in request.excluded_files.split('\n') if file_pattern.strip()]
                 logger.info(f"Using custom excluded files: {excluded_files}")
+            if request.included_dirs:
+                included_dirs = [unquote(dir_path) for dir_path in request.included_dirs.split('\n') if dir_path.strip()]
+                logger.info(f"Using custom included directories: {included_dirs}")
+            if request.included_files:
+                included_files = [unquote(file_pattern) for file_pattern in request.included_files.split('\n') if file_pattern.strip()]
+                logger.info(f"Using custom included files: {included_files}")
 
-            request_rag.prepare_retriever(request.repo_url, request.type, request.token, excluded_dirs, excluded_files)
+            request_rag.prepare_retriever(request.repo_url, request.type, request.token, excluded_dirs, excluded_files, included_dirs, included_files)
             logger.info(f"Retriever prepared for {request.repo_url}")
+        except ValueError as e:
+            if "No valid documents with embeddings found" in str(e):
+                logger.error(f"No valid embeddings found: {str(e)}")
+                raise HTTPException(status_code=500, detail="No valid document embeddings found. This may be due to embedding size inconsistencies or API errors during document processing. Please try again or check your repository content.")
+            else:
+                logger.error(f"ValueError preparing retriever: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error preparing retriever: {str(e)}")
         except Exception as e:
             logger.error(f"Error preparing retriever: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Error preparing retriever: {str(e)}")
+            # Check for specific embedding-related errors
+            if "All embeddings should be of the same size" in str(e):
+                raise HTTPException(status_code=500, detail="Inconsistent embedding sizes detected. Some documents may have failed to embed properly. Please try again.")
+            else:
+                raise HTTPException(status_code=500, detail=f"Error preparing retriever: {str(e)}")
 
         # Validate request
         if not request.messages or len(request.messages) == 0:
@@ -223,15 +237,9 @@ async def chat_completions_stream(request: ChatCompletionRequest):
         repo_type = request.type
 
         # Get language information
-        language_code = request.language or "en"
-        language_name = {
-            "en": "English",
-            "ja": "Japanese (日本語)",
-            "zh": "Mandarin Chinese (中文)",
-            "es": "Spanish (Español)",
-            "kr": "Korean (한국어)",
-            "vi": "Vietnamese (Tiếng Việt)"
-        }.get(language_code, "English")
+        language_code = request.language or configs["lang_config"]["default"]
+        supported_langs = configs["lang_config"]["supported_languages"]
+        language_name = supported_langs.get(language_code, "English")
 
         # Create system prompt
         if is_deep_research:
@@ -393,7 +401,7 @@ This file contains...
 
         # Create the prompt with context
         prompt = f"/no_think {system_prompt}\n\n"
-        
+
         if conversation_history:
             prompt += f"<conversation_history>\n{conversation_history}</conversation_history>\n\n"
 
@@ -439,8 +447,8 @@ This file contains...
             logger.info(f"Using OpenRouter with model: {request.model}")
 
             # Check if OpenRouter API key is set
-            if not os.environ.get("OPENROUTER_API_KEY"):
-                logger.warning("OPENROUTER_API_KEY environment variable is not set, but continuing with request")
+            if not OPENROUTER_API_KEY:
+                logger.warning("OPENROUTER_API_KEY not configured, but continuing with request")
                 # We'll let the OpenRouterClient handle this and return a friendly error message
 
             model = OpenRouterClient()
@@ -460,8 +468,8 @@ This file contains...
             logger.info(f"Using Openai protocol with model: {request.model}")
 
             # Check if an API key is set for Openai
-            if not os.environ.get("OPENAI_API_KEY"):
-                logger.warning("OPENAI_API_KEY environment variable is not set, but continuing with request")
+            if not OPENAI_API_KEY:
+                logger.warning("OPENAI_API_KEY not configured, but continuing with request")
                 # We'll let the OpenAIClient handle this and return an error message
 
             # Initialize Openai client
@@ -469,6 +477,27 @@ This file contains...
             model_kwargs = {
                 "model": request.model,
                 "stream": True,
+                "temperature": model_config["temperature"],
+                "top_p": model_config["top_p"]
+            }
+
+            api_kwargs = model.convert_inputs_to_api_kwargs(
+                input=prompt,
+                model_kwargs=model_kwargs,
+                model_type=ModelType.LLM
+            )
+        elif request.provider == "bedrock":
+            logger.info(f"Using AWS Bedrock with model: {request.model}")
+
+            # Check if AWS credentials are set
+            if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
+                logger.warning("AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY not configured, but continuing with request")
+                # We'll let the BedrockClient handle this and return an error message
+
+            # Initialize Bedrock client
+            model = BedrockClient()
+            model_kwargs = {
+                "model": request.model,
                 "temperature": model_config["temperature"],
                 "top_p": model_config["top_p"]
             }
@@ -529,6 +558,20 @@ This file contains...
                     except Exception as e_openai:
                         logger.error(f"Error with Openai API: {str(e_openai)}")
                         yield f"\nError with Openai API: {str(e_openai)}\n\nPlease check that you have set the OPENAI_API_KEY environment variable with a valid API key."
+                elif request.provider == "bedrock":
+                    try:
+                        # Get the response and handle it properly using the previously created api_kwargs
+                        logger.info("Making AWS Bedrock API call")
+                        response = await model.acall(api_kwargs=api_kwargs, model_type=ModelType.LLM)
+                        # Handle response from Bedrock (not streaming yet)
+                        if isinstance(response, str):
+                            yield response
+                        else:
+                            # Try to extract text from the response
+                            yield str(response)
+                    except Exception as e_bedrock:
+                        logger.error(f"Error with AWS Bedrock API: {str(e_bedrock)}")
+                        yield f"\nError with AWS Bedrock API: {str(e_bedrock)}\n\nPlease check that you have set the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables with valid credentials."
                 else:
                     # Generate streaming response
                     response = model.generate_content(prompt, stream=True)
@@ -616,6 +659,28 @@ This file contains...
                             except Exception as e_fallback:
                                 logger.error(f"Error with Openai API fallback: {str(e_fallback)}")
                                 yield f"\nError with Openai API fallback: {str(e_fallback)}\n\nPlease check that you have set the OPENAI_API_KEY environment variable with a valid API key."
+                        elif request.provider == "bedrock":
+                            try:
+                                # Create new api_kwargs with the simplified prompt
+                                fallback_api_kwargs = model.convert_inputs_to_api_kwargs(
+                                    input=simplified_prompt,
+                                    model_kwargs=model_kwargs,
+                                    model_type=ModelType.LLM
+                                )
+
+                                # Get the response using the simplified prompt
+                                logger.info("Making fallback AWS Bedrock API call")
+                                fallback_response = await model.acall(api_kwargs=fallback_api_kwargs, model_type=ModelType.LLM)
+
+                                # Handle response from Bedrock
+                                if isinstance(fallback_response, str):
+                                    yield fallback_response
+                                else:
+                                    # Try to extract text from the response
+                                    yield str(fallback_response)
+                            except Exception as e_fallback:
+                                logger.error(f"Error with AWS Bedrock API fallback: {str(e_fallback)}")
+                                yield f"\nError with AWS Bedrock API fallback: {str(e_fallback)}\n\nPlease check that you have set the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables with valid credentials."
                         else:
                             # Initialize Google Generative AI model
                             model_config = get_model_config(request.provider, request.model)

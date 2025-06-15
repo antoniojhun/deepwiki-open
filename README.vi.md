@@ -14,7 +14,7 @@
 [![Twitter/X](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/sashimikun_void)
 [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/VQMBGR8u5v)
 
-[English](./README.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md)
+[English](./README.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md) | [Português Brasileiro](./README.pt-br.md)
 
 ## ✨ Tính năng
 
@@ -99,12 +99,12 @@ yarn dev
 DeepWiki dùng AI để:
 
 1. Clone và phân tích GitHub, GitLab, hoặc Bitbucket repository (bao gồm private repos với token authentication)
-2. Tạo embeddings cho code (Rag support) 
+2. Tạo embeddings cho code (Rag support)
 3. Tạo documentation với context-aware AI (dùng Google Gemini, OpenAI, OpenRouter, hay local Ollama models)
 4. Tạo diagrams để giải thích code relationships
 5. Organize thông tin thành 1 trang wiki
-6. Cho phép Q&A với repository 
-7. Cung cấp khả năng DeepResearch 
+6. Cho phép Q&A với repository
+7. Cung cấp khả năng DeepResearch
 
 ```mermaid
 graph TD
@@ -147,8 +147,8 @@ graph TD
 ```
 deepwiki/
 ├── api/                  # Backend API server
-│   ├── main.py           # API 
-│   ├── api.py            # FastAPI 
+│   ├── main.py           # API
+│   ├── api.py            # FastAPI
 │   ├── rag.py            # Retrieval Augmented Generation (RAG)
 │   ├── data_pipeline.py  # Data processing utilities
 │   └── requirements.txt  # Python dependencies
@@ -176,7 +176,7 @@ deepwiki/
 | `PORT` | Port của API server (mặc định: 8001) | không | Nếu bạn muốn chạy API và frontend trên cùng 1 máy, hãy điều chỉnh Port `SERVER_BASE_URL` |
 | `SERVER_BASE_URL` | Đường dẫnn mặt định của API server (mặc định: http://localhost:8001) | không |
 
-### Cài Đặt với Docker 
+### Cài Đặt với Docker
 
 Bạn có thể dùng Docker để run DeepWiki:
 
@@ -210,14 +210,14 @@ echo "GOOGLE_API_KEY=your_google_api_key" > .env
 echo "OPENAI_API_KEY=your_openai_api_key" >> .env
 echo "OPENROUTER_API_KEY=your_openrouter_api_key" >> .env
 
-# Run container với .env file 
+# Run container với .env file
 docker run -p 8001:8001 -p 3000:3000 \
   -v $(pwd)/.env:/app/.env \
   -v ~/.adalflow:/root/.adalflow \
   ghcr.io/asyncfuncai/deepwiki-open:latest
 ```
 
-#### Bạn có thể Building the Docker image trên máy cục bộ 
+#### Bạn có thể Building the Docker image trên máy cục bộ
 
 
 ```bash
@@ -236,7 +236,7 @@ docker run -p 8001:8001 -p 3000:3000 \
   deepwiki-open
 ```
 
-### Chi tiết API Server 
+### Chi tiết API Server
 
 API server cung cấp:
 - Repository cloning và indexing
@@ -267,7 +267,7 @@ OPENAI_API_KEY=openai_key_của_bạn            # Bắt buộc cho các mô hì
 OPENROUTER_API_KEY=openrouter_key_của_bạn    # Bắt buộc cho các mô hình OpenRouter
 
 # Cấu hình URL cơ sở cho OpenAI API
-OPENAI_API_BASE=https://endpoint-tùy-chỉnh.com/v1  # Tùy chọn, cho các điểm cuối API OpenAI tùy chỉnh
+OPENAI_BASE_URL=https://endpoint-tùy-chỉnh.com/v1  # Tùy chọn, cho các điểm cuối API OpenAI tùy chỉnh
 
 # Thư mục cấu hình
 DEEPWIKI_CONFIG_DIR=/đường/dẫn/đến/thư_mục/cấu_hình  # Tùy chọn, cho vị trí tệp cấu hình tùy chỉnh
@@ -317,25 +317,25 @@ Cấu hình base_url của OpenAI Client được thiết kế chủ yếu cho n
 
 DeepWiki hiện đã hỗ trợ [OpenRouter](https://openrouter.ai/) làm nhà cung cấp mô hình, cho phép bạn truy cập hàng trăm mô hình AI thông qua một API duy nhất:
 
-- **Nhiều tùy chọn mô hình**: Truy cập các mô hình từ OpenAI, Anthropic, Google, Meta, Mistral và nhiều nhà cung cấp khác  
-- **Cấu hình đơn giản**: Chỉ cần thêm khóa API của bạn từ OpenRouter và chọn mô hình bạn muốn sử dụng  
-- **Tiết kiệm chi phí**: Lựa chọn mô hình phù hợp với ngân sách và nhu cầu hiệu suất của bạn  
+- **Nhiều tùy chọn mô hình**: Truy cập các mô hình từ OpenAI, Anthropic, Google, Meta, Mistral và nhiều nhà cung cấp khác
+- **Cấu hình đơn giản**: Chỉ cần thêm khóa API của bạn từ OpenRouter và chọn mô hình bạn muốn sử dụng
+- **Tiết kiệm chi phí**: Lựa chọn mô hình phù hợp với ngân sách và nhu cầu hiệu suất của bạn
 - **Chuyển đổi dễ dàng**: Chuyển đổi giữa các mô hình khác nhau mà không cần thay đổi mã nguồn
 
 
 ### Cách sử dụng OpenRouter với DeepWiki
 
-1. **Lấy API Key**: Đăng ký tại [OpenRouter](https://openrouter.ai/) và lấy khóa API 
-2. **Thêm vào biến môi trường**: Thêm `OPENROUTER_API_KEY=your_key` vào file `.env` 
-3. **Bật trong giao diện**: Chọn "Use OpenRouter API" trên trang chủ  
+1. **Lấy API Key**: Đăng ký tại [OpenRouter](https://openrouter.ai/) và lấy khóa API
+2. **Thêm vào biến môi trường**: Thêm `OPENROUTER_API_KEY=your_key` vào file `.env`
+3. **Bật trong giao diện**: Chọn "Use OpenRouter API" trên trang chủ
 4. **Chọn mô hình**: Lựa chọn từ các mô hình phổ biến như GPT-4o, Claude 3.5 Sonnet, Gemini 2.0 và nhiều hơn nữa
 
 
 OpenRouter đặc biệt hữu ích nếu bạn muốn:
 
-- Thử nhiều mô hình khác nhau mà không cần đăng ký nhiều dịch vụ  
-- Truy cập các mô hình có thể bị giới hạn tại khu vực của bạn  
-- So sánh hiệu năng giữa các nhà cung cấp mô hình khác nhau  
+- Thử nhiều mô hình khác nhau mà không cần đăng ký nhiều dịch vụ
+- Truy cập các mô hình có thể bị giới hạn tại khu vực của bạn
+- So sánh hiệu năng giữa các nhà cung cấp mô hình khác nhau
 - Tối ưu hóa chi phí so với hiệu suất dựa trên nhu cầu của bạn
 
 
@@ -345,9 +345,9 @@ OpenRouter đặc biệt hữu ích nếu bạn muốn:
 
 Tính năng Hỏi cho phép bạn trò chuyện với kho mã của mình bằng cách sử dụng kỹ thuật RAG (Retrieval Augmented Generation):
 
-- **Phản hồi theo ngữ cảnh**: Nhận câu trả lời chính xác dựa trên mã thực tế trong kho của bạn  
-- **Ứng dụng RAG**: Hệ thống truy xuất các đoạn mã liên quan để tạo ra câu trả lời có cơ sở  
-- **Phản hồi theo thởi gian thực**: Xem câu trả lời được tạo ra trực tiếp, mang lại trải nghiệm tương tác hơn  
+- **Phản hồi theo ngữ cảnh**: Nhận câu trả lời chính xác dựa trên mã thực tế trong kho của bạn
+- **Ứng dụng RAG**: Hệ thống truy xuất các đoạn mã liên quan để tạo ra câu trả lời có cơ sở
+- **Phản hồi theo thởi gian thực**: Xem câu trả lời được tạo ra trực tiếp, mang lại trải nghiệm tương tác hơn
 - **Lưu lịch sử cuộc trò chuyện**: Hệ thống duy trì ngữ cảnh giữa các câu hỏi để cuộc đối thoại liền mạch hơn
 
 
@@ -355,12 +355,12 @@ Tính năng Hỏi cho phép bạn trò chuyện với kho mã của mình bằng
 
 DeepResearch nâng tầm phân tích kho mã với quy trình nghiện cứu nhiểu vòng:
 
-- **Ngieen cứu chuyên sâu**: Khám phá kỹ lưỡng các chủ đề phức tạp thông qua nhiểu vòng nghiện cứu  
-- **Quy trình có cấu trúc**: Tuân theo kế hoạch nghiện cứu rõ ràng với các bản cập nhật và kết luận tổng thể  
-- **Tự động tiếp tục**: AI sẽ tự động tiếp tục quá trình nghiện cứu cho đến khi đưa ra kết luận (tối đa 5 vòng)  
-- **Các giai đoạn nghiện cứu**:  
-  1. **Kế hoạch nghiện cứu**: Phác thảo phương pháp và những phát hiện ban đầu  
-  2. **Cập nhật nghiện cứu**: Bổ sung kiến thức mới qua từng vòng lặp  
+- **Ngieen cứu chuyên sâu**: Khám phá kỹ lưỡng các chủ đề phức tạp thông qua nhiểu vòng nghiện cứu
+- **Quy trình có cấu trúc**: Tuân theo kế hoạch nghiện cứu rõ ràng với các bản cập nhật và kết luận tổng thể
+- **Tự động tiếp tục**: AI sẽ tự động tiếp tục quá trình nghiện cứu cho đến khi đưa ra kết luận (tối đa 5 vòng)
+- **Các giai đoạn nghiện cứu**:
+  1. **Kế hoạch nghiện cứu**: Phác thảo phương pháp và những phát hiện ban đầu
+  2. **Cập nhật nghiện cứu**: Bổ sung kiến thức mới qua từng vòng lặp
   3. **Kết luận cuối cùng**: Đưa ra câu trả lời toàn diện dựa trên tất cả các vòng nghiện cứu
 
 Để sử dụng DeepResearch, chỉ cần bật công tắc "Deep Research" trong giao diện Hỏi (Ask) trước khi gửi câu hỏi của bạn.
@@ -368,13 +368,13 @@ DeepResearch nâng tầm phân tích kho mã với quy trình nghiện cứu nhi
 
 ## 📱 Ảnh chụp màng hình
 
-![Giao diện chính của DeepWiki](screenshots/Interface.png)  
+![Giao diện chính của DeepWiki](screenshots/Interface.png)
 *Giao diện chính của DeepWiki*
 
-![Hỗ trợ kho riêng tư](screenshots/privaterepo.png)  
+![Hỗ trợ kho riêng tư](screenshots/privaterepo.png)
 *Truy cập kho riêng tư bằng Personal Access Token*
 
-![Tính năng DeepResearch](screenshots/DeepResearch.png)  
+![Tính năng DeepResearch](screenshots/DeepResearch.png)
 *DeepResearch thực hiện nghiện cứu nhiểu vòng cho các chủ đề phức tạp*
 
 ### Demo Video
@@ -386,31 +386,31 @@ DeepResearch nâng tầm phân tích kho mã với quy trình nghiện cứu nhi
 ## ❓ Khắc phục sự cố
 
 ### Vấn đề với API Key
-- **"Thiếu biến môi trường"**: Đảm bảo rằng file `.env` của bạn nằm ở thư mục gốc của dự án và chứa các API key cần thiết  
-- **"API key không hợp lệ"**: Kiểm tra lại xem bạn đã sao chép đầy đủ API key mà không có khoảng trắng thừa chưa  
+- **"Thiếu biến môi trường"**: Đảm bảo rằng file `.env` của bạn nằm ở thư mục gốc của dự án và chứa các API key cần thiết
+- **"API key không hợp lệ"**: Kiểm tra lại xem bạn đã sao chép đầy đủ API key mà không có khoảng trắng thừa chưa
 - **"Lỗi API OpenRouter"**: Xác minh rằng API key của OpenRouter là hợp lệ và có đủ tín dụng
 
 ### Vấn đề kết nối
-- **"Không thể kết nối với máy chủ API"**: Đảm bảo máy chủ API đang chạy trên cổng 8001  
+- **"Không thể kết nối với máy chủ API"**: Đảm bảo máy chủ API đang chạy trên cổng 8001
 - **"Lỗi CORS"**: API được cấu hình để cho phép tất cả các nguồn gốc, nhưng nếu gặp sự cố, thử chạy cả frontend và backend trên cùng một máy tính
 
 ### Vấn đề khi tạo nội dung
-- **"Lỗi khi tạo wiki"**: Với các kho mã rất lớn, hãy thử trước với kho mã nhỏ hơn  
-- **"Định dạng kho mã không hợp lệ"**: Đảm bảo bạn đang sử dụng định dạng URL hợp lệ cho GitHub, GitLab hoặc Bitbucket  
-- **"Không thể lấy cấu trúc kho mã"**: Với các kho mã riêng tư, hãy đảm bảo bạn đã nhập token truy cập cá nhân hợp lệ và có quyền truy cập phù hợp  
+- **"Lỗi khi tạo wiki"**: Với các kho mã rất lớn, hãy thử trước với kho mã nhỏ hơn
+- **"Định dạng kho mã không hợp lệ"**: Đảm bảo bạn đang sử dụng định dạng URL hợp lệ cho GitHub, GitLab hoặc Bitbucket
+- **"Không thể lấy cấu trúc kho mã"**: Với các kho mã riêng tư, hãy đảm bảo bạn đã nhập token truy cập cá nhân hợp lệ và có quyền truy cập phù hợp
 - **"Lỗi khi render sơ đồ"**: Ứng dụng sẽ tự động thử khắc phục các sơ đồ bị lỗi
 
 ### Các giải pháp phổ biến
-1. **Khởi động lại cả hai máy chủ**: Đôi khi, một lần khởi động lại đơn giản có thể giải quyết hầu hết các vấn đề  
-2. **Kiểm tra nhật ký trình duyệt**: Mở công cụ phát triển của trình duyệt để xem các lỗi JavaScript  
+1. **Khởi động lại cả hai máy chủ**: Đôi khi, một lần khởi động lại đơn giản có thể giải quyết hầu hết các vấn đề
+2. **Kiểm tra nhật ký trình duyệt**: Mở công cụ phát triển của trình duyệt để xem các lỗi JavaScript
 3. **Kiểm tra nhật ký API**: Xem các lỗi Python trong terminal nơi API đang chạy
 
 
 ## 🤝 Đóng góp
 
 Chúng tôi hoan nghênh mọi đóng góp! Bạn có thể:
-- Mở các vấn đề (issues) để báo lỗi hoặc yêu cầu tính năng  
-- Gửi pull request để cải thiện mã nguồn  
+- Mở các vấn đề (issues) để báo lỗi hoặc yêu cầu tính năng
+- Gửi pull request để cải thiện mã nguồn
 - Chia sẻ phản hồi và ý tưởng của bạn
 
 ## 📄 Giấy phép
@@ -420,3 +420,4 @@ Dự án này được cấp phép theo Giấy phép MIT - xem file [LICENSE](LI
 ## ⭐ Lịch sử
 
 [![Biểu đồ lịch sử](https://api.star-history.com/svg?repos=AsyncFuncAI/deepwiki-open&type=Date)](https://star-history.com/#AsyncFuncAI/deepwiki-open&Date)
+
