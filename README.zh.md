@@ -14,7 +14,7 @@
 [![Twitter/X](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/sashimikun_void)
 [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/VQMBGR8u5v)
 
-[English](./README.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md) | [Português Brasileiro](./README.pt-br.md)
+[English](./README.md) | [简体中文](./README.zh.md) | [繁體中文](./README.zh-tw.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md) | [Português Brasileiro](./README.pt-br.md) | [Français](./README.fr.md) | [Русский](./README.ru.md)
 
 ## ✨ 特点
 
@@ -377,7 +377,7 @@ OpenAI 客户端的 base_url 配置主要为拥有私有 API 渠道的企业用�
 2. 在项目根目录的 `.env` 文件中，配置相应的环境变量，例如：
    ```
    OPENAI_API_KEY=你的_api_key
-   OPENAI_API_BASE_URL=你的_openai_兼容接口地址
+   OPENAI_BASE_URL=你的_openai_兼容接口地址
    ```
 3. 程序会自动用环境变量的值替换 embedder.json 里的占位符。
 
